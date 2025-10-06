@@ -27,6 +27,71 @@ npm start
 
 3. Open your browser and go to `http://localhost:3000`
 
+## Running on Ubuntu Startup
+
+To make the pastebin application run automatically when Ubuntu starts:
+
+### Method 1: Using the Setup Script (Recommended)
+
+1. **Make the script executable:**
+   ```bash
+   chmod +x setup-startup.sh
+   ```
+
+2. **Run the setup script as root:**
+   ```bash
+   sudo ./setup-startup.sh
+   ```
+
+This will:
+- Install Node.js if needed
+- Copy files to `/opt/pastebin`
+- Install dependencies
+- Create a systemd service
+- Enable auto-start on boot
+
+### Method 2: Manual Setup
+
+1. **Install Node.js:**
+   ```bash
+   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   ```
+
+2. **Create application directory:**
+   ```bash
+   sudo mkdir -p /opt/pastebin
+   sudo cp -r . /opt/pastebin/
+   cd /opt/pastebin
+   sudo npm install --production
+   ```
+
+3. **Create systemd service:**
+   ```bash
+   sudo cp pastebin.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable pastebin.service
+   sudo systemctl start pastebin.service
+   ```
+
+### Service Management Commands
+
+```bash
+# Start/Stop/Restart service
+sudo systemctl start pastebin
+sudo systemctl stop pastebin
+sudo systemctl restart pastebin
+
+# Check status
+sudo systemctl status pastebin
+
+# View logs
+sudo journalctl -u pastebin -f
+
+# Disable auto-start
+sudo systemctl disable pastebin
+```
+
 ## Usage
 
 ### First Time Setup
