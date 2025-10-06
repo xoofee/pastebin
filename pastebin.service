@@ -13,15 +13,5 @@ RestartSec=10
 Environment=NODE_ENV=production
 Environment=PORT=3000
 
-# Security and permissions
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/opt/pastebin /var/lib/pastebin
-
-# File permissions
-UMask=0022
-
 [Install]
 WantedBy=multi-user.target
