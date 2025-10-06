@@ -5,6 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
+Group=www-data
 WorkingDirectory=/opt/pastebin
 ExecStart=/usr/bin/node server.js
 Restart=always
@@ -12,6 +13,15 @@ RestartSec=10
 Environment=NODE_ENV=production
 Environment=PORT=3000
 
+# Security and permissions
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/pastebin /var/lib/pastebin
+
+# File permissions
+UMask=0022
+
 [Install]
 WantedBy=multi-user.target
-
