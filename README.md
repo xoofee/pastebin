@@ -2,6 +2,8 @@
 
 A simple Node.js pastebin application that allows users to upload files, images, and share text with password protection.
 
+![Pastebin Application](pastebin.jpg)
+
 ## Features
 
 1. **File Upload**: Upload text files, images, and other file types (max 10MB)
