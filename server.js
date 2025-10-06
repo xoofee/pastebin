@@ -110,7 +110,10 @@ const requireAuth = (req, res, next) => {
     if (req.session.authenticated) {
         next();
     } else {
-        res.redirect('/login');
+        // Check if request came through proxy (has /paste/ prefix)
+        const referer = req.get('Referer') || '';
+        const basePath = referer.includes('/paste/') ? '/paste' : '';
+        res.redirect(basePath + '/login');
     }
 };
 
@@ -122,14 +125,14 @@ app.get('/', requireAuth, (req, res) => {
     
     db.all(`SELECT * FROM items ORDER BY upload_date DESC LIMIT ? OFFSET ?`, [limit, offset], (err, items) => {
         if (err) {
-            console.error(err);
-            return res.status(500).send('Database error');
+            console.error('Database error:', err);
+            return res.status(500).send(`Database error: ${err.message} (Code: ${err.code})`);
         }
         
         db.get(`SELECT COUNT(*) as total FROM items`, (err, count) => {
             if (err) {
-                console.error(err);
-                return res.status(500).send('Database error');
+                console.error('Database error:', err);
+                return res.status(500).send(`Database error: ${err.message} (Code: ${err.code})`);
             }
             
             const totalPages = Math.ceil(count.total / limit);
@@ -155,8 +158,8 @@ app.post('/login', (req, res) => {
     
     db.get(`SELECT hash FROM password LIMIT 1`, (err, row) => {
         if (err) {
-            console.error(err);
-            return res.status(500).send('Database error');
+            console.error('Database error:', err);
+            return res.status(500).send(`Database error: ${err.message} (Code: ${err.code})`);
         }
         
         if (!row) {
@@ -164,8 +167,8 @@ app.post('/login', (req, res) => {
             const hash = bcrypt.hashSync(password, 10);
             db.run(`INSERT INTO password (hash) VALUES (?)`, [hash], (err) => {
                 if (err) {
-                    console.error(err);
-                    return res.status(500).send('Database error');
+                    console.error('Database error:', err);
+                    return res.status(500).send(`Database error: ${err.message} (Code: ${err.code})`);
                 }
                 req.session.authenticated = true;
                 res.redirect('/');
@@ -232,8 +235,8 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     db.run(`INSERT INTO items (filename, originalname, mimetype, size, content, thumbnail_filename) VALUES (?, ?, ?, ?, ?, ?)`,
         [filename, originalname, mimetype, size, content, thumbnailFilename], (err) => {
             if (err) {
-                console.error(err);
-                return res.status(500).send('Database error');
+                console.error('Database error:', err);
+                return res.status(500).send(`Database error: ${err.message} (Code: ${err.code})`);
             }
             // Redirect to home page after successful upload
             res.redirect('/');
@@ -245,8 +248,8 @@ app.get('/view/:id', requireAuth, (req, res) => {
     
     db.get(`SELECT * FROM items WHERE id = ?`, [id], (err, item) => {
         if (err) {
-            console.error(err);
-            return res.status(500).send('Database error');
+            console.error('Database error:', err);
+            return res.status(500).send(`Database error: ${err.message} (Code: ${err.code})`);
         }
         
         if (!item) {
@@ -262,8 +265,8 @@ app.get('/download/:id', requireAuth, (req, res) => {
     
     db.get(`SELECT * FROM items WHERE id = ?`, [id], (err, item) => {
         if (err) {
-            console.error(err);
-            return res.status(500).send('Database error');
+            console.error('Database error:', err);
+            return res.status(500).send(`Database error: ${err.message} (Code: ${err.code})`);
         }
         
         if (!item) {
@@ -280,8 +283,8 @@ app.delete('/delete/:id', requireAuth, (req, res) => {
     
     db.get(`SELECT * FROM items WHERE id = ?`, [id], (err, item) => {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Database error' });
+            console.error('Database error:', err);
+            return res.status(500).json({ error: `Database error: ${err.message} (Code: ${err.code})` });
         }
         
         if (!item) {
@@ -309,8 +312,8 @@ app.delete('/delete/:id', requireAuth, (req, res) => {
         // Delete from database
         db.run(`DELETE FROM items WHERE id = ?`, [id], (err) => {
             if (err) {
-                console.error(err);
-                return res.status(500).json({ error: 'Database error' });
+                console.error('Database error:', err);
+                return res.status(500).json({ error: `Database error: ${err.message} (Code: ${err.code})` });
             }
             res.json({ success: true });
         });
@@ -320,8 +323,8 @@ app.delete('/delete/:id', requireAuth, (req, res) => {
 app.delete('/delete-all', requireAuth, (req, res) => {
     db.all(`SELECT filename, thumbnail_filename FROM items`, (err, items) => {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Database error' });
+            console.error('Database error:', err);
+            return res.status(500).json({ error: `Database error: ${err.message} (Code: ${err.code})` });
         }
         
         // Delete all files from filesystem
@@ -347,8 +350,8 @@ app.delete('/delete-all', requireAuth, (req, res) => {
         // Delete all from database
         db.run(`DELETE FROM items`, (err) => {
             if (err) {
-                console.error(err);
-                return res.status(500).json({ error: 'Database error' });
+                console.error('Database error:', err);
+                return res.status(500).json({ error: `Database error: ${err.message} (Code: ${err.code})` });
             }
             res.json({ success: true });
         });
@@ -372,14 +375,14 @@ app.post('/admin/set-password', (req, res) => {
     
     db.run(`DELETE FROM password`, (err) => {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Database error' });
+            console.error('Database error:', err);
+            return res.status(500).json({ error: `Database error: ${err.message} (Code: ${err.code})` });
         }
         
         db.run(`INSERT INTO password (hash) VALUES (?)`, [hash], (err) => {
             if (err) {
-                console.error(err);
-                return res.status(500).json({ error: 'Database error' });
+                console.error('Database error:', err);
+                return res.status(500).json({ error: `Database error: ${err.message} (Code: ${err.code})` });
             }
             res.json({ success: true, message: 'Password updated successfully' });
         });
