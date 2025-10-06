@@ -158,3 +158,23 @@ pastebin/
 - Sessions are stored server-side
 - File uploads are limited to 10MB
 - All uploaded files are stored in the `uploads/` directory
+
+
+## nginx proxy
+
+```
+
+location /paste/ {
+    proxy_pass http://127.0.0.1:3000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    
+    # File upload support
+    client_max_body_size 10M;
+    proxy_read_timeout 300s;
+    proxy_connect_timeout 75s;
+}
+
+```
